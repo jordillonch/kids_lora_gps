@@ -3,7 +3,10 @@ cmake_minimum_required(VERSION 3.5)
 
 # Include the components directory of the main application:
 #
-set(EXTRA_COMPONENT_DIRS "../components")
+list(APPEND EXTRA_COMPONENT_DIRS "../../components/common")
+list(APPEND EXTRA_COMPONENT_DIRS "../../components/display")
+list(APPEND EXTRA_COMPONENT_DIRS "../../components/gps")
+list(APPEND EXTRA_COMPONENT_DIRS "../../components/radio")
 
 # Set the components to include the tests for.
 # This can be overriden from CMake cache:

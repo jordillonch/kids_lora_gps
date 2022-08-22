@@ -4,9 +4,9 @@
 #include <esp_log.h>
 #include <cbor.h>
 #include <time.h>
-#include "gps.h"
+#include "gps_uart_nmea.h"
 #include "lvgl.h"
-#include "display.h"
+#include "display_initializer.h"
 #include "lora.h"
 #include "gps_cbor_coders.h"
 

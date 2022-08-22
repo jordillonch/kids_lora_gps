@@ -4,7 +4,7 @@
 #include <esp_log.h>
 #include <esp_check.h>
 #include "lvgl.h"
-#include "display.h"
+#include "display_initializer.h"
 #include "lora.h"
 #include "gps_cbor_coders.h"
 
@@ -38,10 +38,11 @@ static void task_lora_rx(void *p) {
     lora_receive();    // put into receive mode
 
     while (lora_received()) {
-      x = lora_receive_packet(lora_message, sizeof(lora_message));
+      size_t lora_message_length = sizeof(lora_message);
+      x = lora_receive_packet(lora_message, lora_message_length);
       lora_message[x] = 0;
 
-      if (ESP_OK == gps_cbor_decode(lora_message, &latitude, &longitude, &speed)) {
+      if (ESP_OK == gps_cbor_decode(lora_message, lora_message_length, &latitude, &longitude, &speed)) {
         char buffer[100];
         sprintf(buffer, "Ariadna & Julia position:\n"
                         "lat=%.05f°N\n"
