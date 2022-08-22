@@ -8,6 +8,7 @@
 #include "lvgl.h"
 #include "display.h"
 #include "lora.h"
+#include "gps_cbor_coders.h"
 
 #define TAG "kids_lora_gps_tx"
 #define LORA_SEND_GPS_COORDINATES_EVERY_SECONDS 60
@@ -61,13 +62,13 @@ static void on_gps_update_screen(void *event_handler_arg,
       sprintf(buffer, "Ariadna & Julia position: "
                       "lat=%.05f°N | "
                       "lng=%.05f°E",
-                      gps->latitude, gps->longitude);
+              gps->latitude, gps->longitude);
       ESP_LOGD(TAG, "%s", buffer);
 
       sprintf(buffer, "Ariadna & Julia position:\n"
                       "lat=%.05f°N\n"
                       "lng=%.05f°E",
-                      gps->latitude, gps->longitude);
+              gps->latitude, gps->longitude);
       lv_label_set_text(label_gps_position, buffer);
       lv_obj_align(label_gps_position, NULL, LV_ALIGN_IN_BOTTOM_LEFT, 3, -3);
       break;
@@ -92,32 +93,10 @@ static void on_gps_send_position_through_lora(void *event_handler_arg,
       if (difftime(now, lora_sent_last_time) >= LORA_SEND_GPS_COORDINATES_EVERY_SECONDS) {
         gps = (gps_t *) event_data;
         //  Max output size is 50 bytes (which fits in a LoRa packet)
-        uint8_t output[50];
-        CborEncoder root_encoder, map_encoder;
-        cbor_encoder_init(&root_encoder, output, sizeof(output), 0);
-        CborError res = cbor_encoder_create_map(&root_encoder, &map_encoder, 3);
-        ESP_ERROR_CHECK(res);
-        res = cbor_encode_text_stringz(&map_encoder, "lat");
-        ESP_ERROR_CHECK(res);
-        res = cbor_encode_float(&map_encoder, gps->latitude);
-        ESP_ERROR_CHECK(res);
-        res = cbor_encode_text_stringz(&map_encoder, "lng");
-        ESP_ERROR_CHECK(res);
-        res = cbor_encode_float(&map_encoder, gps->longitude);
-        ESP_ERROR_CHECK(res);
-        res = cbor_encode_text_stringz(&map_encoder, "s");
-        ESP_ERROR_CHECK(res);
-        res = cbor_encode_float(&map_encoder, gps->speed);
-        ESP_ERROR_CHECK(res);
-        res = cbor_encoder_close_container(&root_encoder, &map_encoder);
-        ESP_ERROR_CHECK(res);
-        size_t output_len = cbor_encoder_get_buffer_size(&root_encoder, output);
-        ESP_LOGD(TAG, "CBOR Output: %d bytes", output_len);
-        for (int i = 0; i < output_len; i++) {
-          ESP_LOGD(TAG, "0x%02x", output[i]);
-        }
-
-        lora_send_packet(output, (int) output_len);
+        uint8_t message[50];
+        size_t message_length;
+        ESP_ERROR_CHECK(gps_cbor_encode(gps->latitude, gps->longitude, gps->speed, message, &message_length));
+        lora_send_packet(message, (int) message_length);
         lora_packet_count++;
 
         char buffer[30];

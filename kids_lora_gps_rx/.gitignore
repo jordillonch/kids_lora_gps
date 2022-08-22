@@ -60,4 +60,4 @@ build/
 sdkconfig
 sdkconfig.old
 
-/cmake-build-debug/
+cmake-build-debug/

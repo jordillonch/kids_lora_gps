@@ -2,11 +2,11 @@
 #include <freertos/FreeRTOS.h>
 #include <freertos/task.h>
 #include <esp_log.h>
-#include <cbor.h>
 #include <esp_check.h>
 #include "lvgl.h"
 #include "display.h"
 #include "lora.h"
+#include "gps_cbor_coders.h"
 
 #define TAG "kids_lora_gps_rx"
 
@@ -20,8 +20,6 @@ static void init_lora();
 
 static void task_lora_rx(void *p);
 
-static esp_err_t parse_incoming_lora_message(uint8_t *buf, float *latitude, float *longitude, float *speed);
-
 void app_main(void) {
   display_init(init_screen);
   init_lora();
@@ -33,17 +31,17 @@ void app_main(void) {
 }
 
 static void task_lora_rx(void *p) {
-  uint8_t buf[50];
+  uint8_t lora_message[50];
   float latitude, longitude, speed;
   int x;
   for (;;) {
     lora_receive();    // put into receive mode
 
     while (lora_received()) {
-      x = lora_receive_packet(buf, sizeof(buf));
-      buf[x] = 0;
+      x = lora_receive_packet(lora_message, sizeof(lora_message));
+      lora_message[x] = 0;
 
-      if (ESP_OK == parse_incoming_lora_message(buf, &latitude, &longitude, &speed)) {
+      if (ESP_OK == gps_cbor_decode(lora_message, &latitude, &longitude, &speed)) {
         char buffer[100];
         sprintf(buffer, "Ariadna & Julia position:\n"
                         "lat=%.05f°N\n"
@@ -78,54 +76,4 @@ static void init_lora() {
   lora_init();
   lora_set_frequency(868e6);
   lora_enable_crc();
-}
-
-static esp_err_t lora_message_get_float(CborValue *it, float *value);
-
-static esp_err_t parse_incoming_lora_message(uint8_t *buf, float *latitude, float *longitude, float *speed) {
-  CborError ret;
-  CborValue it;
-  CborParser root_parser;
-  CborType type;
-  CborValue recursed;
-
-  cbor_parser_init(buf, sizeof(buf), 0, &root_parser, &it);
-  type = cbor_value_get_type(&it);
-  if (type != CborMapType) {
-    ESP_LOGE(TAG, "Invalid type: 0x%04X", type);
-    return ESP_ERR_INVALID_ARG;
-  }
-
-  ret = cbor_value_enter_container(&it, &recursed);
-  if (ret != CborNoError) {
-    ESP_LOGE(TAG, "%s(%d)", __FUNCTION__, __LINE__);
-    return ESP_ERR_INVALID_ARG;
-  }
-
-  ESP_RETURN_ON_ERROR(lora_message_get_float(&it, latitude), TAG, "unable to parse latitude");
-  ESP_RETURN_ON_ERROR(lora_message_get_float(&it, longitude), TAG, "unable to parse longitude");
-  ESP_RETURN_ON_ERROR(lora_message_get_float(&it, speed), TAG, "unable to parse speed");
-
-  ret = cbor_value_leave_container(&it, &recursed);
-  if (ret != CborNoError) {
-    ESP_LOGE(TAG, "%s(%d)", __FUNCTION__, __LINE__);
-    return ESP_ERR_INVALID_ARG;
-  }
-
-  return ESP_OK;
-}
-
-static esp_err_t lora_message_get_float(CborValue *it, float *value) {
-  CborError ret;
-  CborType type;
-  type = cbor_value_get_type(it);
-  if (type != CborFloatType) {
-    ESP_LOGE(TAG, "Invalid type: 0x%04X", type);
-    return ESP_ERR_INVALID_ARG;
-  }
-  ret = cbor_value_get_float(it, value);
-  if (ret != CborNoError) {
-    return ESP_ERR_INVALID_ARG;
-  }
-  return ESP_OK;
 }
