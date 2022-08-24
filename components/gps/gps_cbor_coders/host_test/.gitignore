@@ -62,3 +62,4 @@ sdkconfig.old
 
 cmake-build-debug/
 cmake-build-test/
+cmake-build-host-test/

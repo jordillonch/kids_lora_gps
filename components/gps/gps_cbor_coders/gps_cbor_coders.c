@@ -17,7 +17,7 @@ esp_err_t gps_cbor_encode(float latitude, float longitude, float speed, uint8_t 
   ESP_RETURN_ON_ERROR(cbor_encode_float(&array_encoder, speed), TAG, "unable to encode speed");
   ESP_RETURN_ON_ERROR(cbor_encoder_close_container(&root_encoder, &array_encoder), TAG, "unable to close map");
   *message_length = cbor_encoder_get_buffer_size(&root_encoder, message);
-  ESP_LOGD(TAG, "CBOR Output: %d bytes", *message_length);
+  ESP_LOGD(TAG, "CBOR Output: %zu bytes", *message_length);
   for (int i = 0; i < *message_length; i++) {
     ESP_LOGD(TAG, "0x%02x", message[i]);
   }
