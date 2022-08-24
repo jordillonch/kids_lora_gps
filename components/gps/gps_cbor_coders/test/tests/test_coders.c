@@ -1,12 +1,7 @@
 #include <stdio.h>
 #include <esp_err.h>
 #include "unity.h"
-
-extern "C" {
 #include <gps_cbor_coders.h>
-}
-
-using namespace std;
 
 void test_It_should_encode_gps_coordinates() {
   uint8_t message[50];
@@ -33,13 +28,4 @@ void test_It_should_encode_and_decode_gps_coordinates() {
   TEST_ASSERT_EQUAL(latitude, decoded_latitude);
   TEST_ASSERT_EQUAL(longitude, decoded_longitude);
   TEST_ASSERT_EQUAL(speed, decoded_speed);
-}
-
-int main(int argc, char **argv)
-{
-    UNITY_BEGIN();
-    RUN_TEST(test_It_should_encode_gps_coordinates);
-    RUN_TEST(test_It_should_encode_and_decode_gps_coordinates);
-    int failures = UNITY_END();
-    return failures;
 }

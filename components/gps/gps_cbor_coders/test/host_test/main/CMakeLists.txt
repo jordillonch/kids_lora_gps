@@ -1,9 +1,11 @@
 idf_component_register(
     SRCS "gps_cbor_coders_test.cpp"
-    "../../gps_cbor_coders.c"
+    "../../../gps_cbor_coders.c"
+    "../../tests/test_coders.c"
     INCLUDE_DIRS
     "."
-    "../../include"
+    "../../tests"
+    "../../../include"
     PRIV_INCLUDE_DIRS
     REQUIRES cmock cbor)
 
