@@ -93,6 +93,24 @@
   idf.py -p /dev/ttyACM0 flash monitor
   ```
 
+
+## CLion
+- Follow this [ESP-IDF Clion guideline](https://www.jetbrains.com/help/clion/esp-idf.html)
+- How to load rx, tx and tests `CMakeLists.txt`:
+  - `kids_lora_gps_rx`:
+    - Use the Project Tool Window to navigate to `kids_lora_gps_rx/CMakeLists.txt` and click with right mouse button and choose `Load CMake Project`.
+  - `kids_lora_gps_tx`:
+    - Use the Project Tool Window to navigate to `kids_lora_gps_tx/CMakeLists.txt` and click with right mouse button and choose `Load CMake Project`.
+  - Tests:
+    - Host test:
+      - You will need an extra CMake profile: 
+        - Go to `Settings - Build, Execution, Deployment > CMake`. Add a new profile with and add the environment variable: `IDF_TARGET=linux`.
+        - Remember to go to `Tools - CMake - Reset Cache and Reload Project`.
+      - Use the Project Tool Window to navigate to `components/gps/gps_cbor_coders/test/host_test/CMakeLists.txt` and click with right mouse button and choose `Load CMake Project`.
+    - Target test:
+      - Use the Project Tool Window to navigate to `components/gps/gps_cbor_coders/test/target_test/CMakeLists.txt` and click with right mouse button and choose `Load CMake Project`.
+
+
 ## Lessons learnt
 - Devices:
   - [x] ESP32 + Espressif framework
