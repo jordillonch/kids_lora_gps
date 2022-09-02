@@ -3,6 +3,7 @@
 #include <freertos/task.h>
 #include <esp_log.h>
 #include <esp_check.h>
+#include <driver/gpio.h>
 #include "lvgl.h"
 #include "display_initializer.h"
 #include "lora.h"
@@ -20,7 +21,17 @@ static void init_lora();
 
 static void task_lora_rx(void *p);
 
+#define SSD1306_RST 16
+
 void app_main(void) {
+  // Reset the display (needed for Heltek board)
+  gpio_pad_select_gpio(SSD1306_RST);
+	gpio_set_direction(SSD1306_RST, GPIO_MODE_OUTPUT);
+  gpio_set_level(SSD1306_RST, 0);
+  vTaskDelay(100 / portTICK_RATE_MS);
+  gpio_set_level(SSD1306_RST, 1);
+  vTaskDelay(100 / portTICK_RATE_MS);
+
   display_init(init_screen);
   init_lora();
   xTaskCreate(&task_lora_rx, "task_lora_rx", 2048, NULL, 5, NULL);
@@ -31,6 +42,7 @@ void app_main(void) {
 }
 
 static void task_lora_rx(void *p) {
+  static uint32_t lora_packet_count;
   uint8_t lora_message[50];
   float latitude, longitude, speed;
   int x;
@@ -52,6 +64,11 @@ static void task_lora_rx(void *p) {
         ESP_LOGD(TAG, "%s", buffer);
         lv_label_set_text(label_gps_position, buffer);
         lv_obj_align(label_gps_position, NULL, LV_ALIGN_IN_BOTTOM_LEFT, 3, -3);
+
+        lora_packet_count++;
+        sprintf(buffer, "LORA pkt: %i", lora_packet_count);
+        lv_label_set_text(label_lora_receive, buffer);
+        lv_obj_align(label_lora_receive, NULL, LV_ALIGN_IN_TOP_LEFT, 3, 3);
       }
 
       lora_receive();
@@ -71,6 +88,7 @@ static void init_screen() {
   lv_style_init(&style);
   lv_style_set_text_font(&style, LV_STATE_DEFAULT, &lv_font_montserrat_14);
   lv_obj_add_style(label_lora_receive, LV_OBJ_PART_MAIN, &style);
+  lv_obj_align(label_lora_receive, NULL, LV_ALIGN_IN_TOP_LEFT, 3, 3);
 }
 
 static void init_lora() {
